@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Glücksrad – Im Tal der Mammuts</title>
+  <style>
+    :root {
+      --bg1: #f6efe5;
+      --bg2: #ead8c0;
+      --card: #fffaf4;
+      --text: #2e241c;
+      --muted: #6b5849;
+      --line: #d6b999;
+      --accent: #8c5a34;
+      --accent2: #b87945;
+      --highlight: #a73737;
+      --shadow: 0 10px 24px rgba(0,0,0,0.10);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, var(--bg1), var(--bg2));
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 2rem;
+      line-height: 1.2;
+    }
+
+    .lead {
+      margin: 0 0 24px;
+      max-width: 980px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 2px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .wheel-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .pointer {
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-top: 34px solid var(--highlight);
+      filter: drop-shadow(0 3px 2px rgba(0,0,0,0.25));
+      margin-bottom: -10px;
+    }
+
+    canvas {
+      width: min(80vw, 430px);
+      height: min(80vw, 430px);
+      max-width: 430px;
+      max-height: 430px;
+      background: #fffefb;
+      border-radius: 50%;
+      border: 6px solid var(--accent);
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+
+    .primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .secondary {
+      background: var(--accent2);
+      color: #23160f;
+    }
+
+    button:hover { opacity: 0.93; }
+    button:disabled { opacity: 0.65; cursor: not-allowed; }
+
+    .result {
+      width: 100%;
+      margin-top: 6px;
+      padding: 18px;
+      border-radius: 18px;
+      background: #fff;
+      border: 2px dashed var(--line);
+      min-height: 210px;
+      line-height: 1.55;
+    }
+
+    .result h2 {
+      margin: 0 0 10px;
+      font-size: 1.35rem;
+    }
+
+    .label {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #f1e4d3;
+      border: 1px solid var(--line);
+      font-size: 0.95rem;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 1.3rem;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 1.08rem;
+    }
+
+    ol, ul {
+      margin: 10px 0 0;
+      padding-left: 22px;
+      line-height: 1.65;
+    }
+
+    .note {
+      margin-top: 16px;
+      padding: 14px;
+      border-left: 6px solid var(--accent);
+      border-radius: 12px;
+      background: #f3e7d6;
+      line-height: 1.6;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.96rem;
+      line-height: 1.6;
+    }
+
+    .rulebox {
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      h1 { font-size: 1.7rem; }
+      .page { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Steinzeit-Glücksrad zu „Im Tal der Mammuts“</h1>
+    <p class="lead">
+      Dieses kleine Spiel kann in eurer Präsentation nach dem Vorlesen eingesetzt werden. Eine Person dreht am Glücksrad und erklärt einen Begriff aus der Lebenswelt der Steinzeit, ohne das Wort direkt zu nennen. So wird erfahrbar, wie Kommunikation und Wissensweitergabe ohne Schrift thematisiert werden können.
+    </p>
+
+    <div class="layout">
+      <section class="card">
+        <div class="wheel-wrap">
+          <div class="pointer"></div>
+          <canvas id="wheel" width="430" height="430" aria-label="Glücksrad"></canvas>
+          <div class="controls">
+            <button class="primary" id="spinBtn">Glücksrad drehen</button>
+            <button class="secondary" id="resetBtn">Zurücksetzen</button>
+          </div>
+          <div class="result" id="resultBox">
+            <h2>Noch kein Begriff gezogen</h2>
+            <p>Klicke auf <strong>„Glücksrad drehen“</strong>. Danach erscheint ein Steinzeit-Begriff mit einer kurzen Hilfe für die erklärende Person.</p>
+            <div class="label">Tipp: Die Spielregeln stehen rechts und können jederzeit mitgelesen werden.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Spielregeln</h2>
+        <ol>
+          <li>Eine Person dreht am Glücksrad.</li>
+          <li>Die Person liest den gezogenen Begriff nur selbst und erklärt ihn der Gruppe.</li>
+          <li>Das gezogene Wort darf <strong>nicht direkt genannt</strong> werden.</li>
+          <li>Es darf <strong>kein Bild</strong> gezeigt und kein Gegenstand eingeblendet werden.</li>
+          <li>Erklärt werden soll nur über <strong>Aussehen, Material, Funktion oder Verwendung</strong>.</li>
+          <li><strong>Kleine Gesten</strong> sind erlaubt, aber nicht so deutlich, dass die Lösung sofort verraten wird.</li>
+          <li>Die Gruppe hört zu und versucht zu erraten, welcher Begriff gemeint ist.</li>
+          <li>Danach kann kurz besprochen werden: <em>Was war beim Erklären schwierig? Wie konnte man den Begriff trotzdem verständlich machen?</em></li>
+        </ol>
+
+        <div class="rulebox">
+          <h3>Didaktischer Gedanke</h3>
+          <p class="small">
+            Das Spiel ist nicht nur ein Ratespiel. Es soll zeigen, dass Wissensweitergabe ohne Schrift andere Wege braucht: genaues Beschreiben, mündliches Erklären, kleine Hinweise, Vormachen und gemeinsames Nachdenken.
+          </p>
+        </div>
+
+        <div class="note">
+          <strong>Passend zum Buch:</strong><br>
+          Die Sequenz knüpft an <em>„Im Tal der Mammuts“</em> an, weil sie eine schriftlose Lebenswelt thematisiert. Das Spiel hilft dabei, mit der Gruppe darüber nachzudenken, wie Menschen in der Steinzeit Wissen und Erfahrungen weitergeben konnten.
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const items = [
+      {
+        name: 'Feuer',
+        hint: 'Erkläre, warum Menschen es für Wärme, Licht und das Zubereiten von Essen brauchten.',
+        example: 'Beispiel: Das macht warm und hell. Man braucht es, wenn einem kalt ist.'
+      },
+      {
+        name: 'Speer',
+        hint: 'Beschreibe Form, Material und wofür er beim Jagen oder Schützen genutzt wurde.',
+        example: 'Beispiel: Das ist lang, vorne spitz und man hält es in der Hand.'
+      },
+      {
+        name: 'Höhle',
+        hint: 'Erkläre, wovor sie schützt und warum Menschen dort waren.',
+        example: 'Beispiel: Das ist ein Ort aus Stein, in dem man Schutz finden kann.'
+      },
+      {
+        name: 'Fellkleidung',
+        hint: 'Beschreibe, wie sie sich anfühlen könnte und wozu sie gut war.',
+        example: 'Beispiel: Das trägt man am Körper, damit einem warm ist.'
+      },
+      {
+        name: 'Steinwerkzeug',
+        hint: 'Erkläre, wofür ein scharfer oder harter Stein nützlich gewesen sein könnte.',
+        example: 'Beispiel: Damit kann man schneiden oder etwas bearbeiten.'
+      },
+      {
+        name: 'Beeren sammeln',
+        hint: 'Beschreibe die Tätigkeit und warum sie für Nahrung wichtig war.',
+        example: 'Beispiel: Man sucht kleine Früchte in der Natur und nimmt sie mit.'
+      },
+      {
+        name: 'Mammut',
+        hint: 'Beschreibe das Tier, sein Aussehen und warum es wichtig oder gefährlich war.',
+        example: 'Beispiel: Das ist ein sehr großes Tier mit viel Fell.'
+      },
+      {
+        name: 'Spuren lesen',
+        hint: 'Erkläre, wie Menschen damit etwas über Tiere oder Wege herausfinden konnten.',
+        example: 'Beispiel: Man schaut auf Zeichen am Boden und erkennt, wer dort war.'
+      }
+    ];
+
+    const colors = ['#d8b08c', '#c98f65', '#e7c9a1', '#b87b52', '#f0d8b5', '#a96a42', '#d6a97a', '#c58a5b'];
+    const canvas = document.getElementById('wheel');
+    const ctx = canvas.getContext('2d');
+    const spinBtn = document.getElementById('spinBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const resultBox = document.getElementById('resultBox');
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = 195;
+    const segmentAngle = (Math.PI * 2) / items.length;
+    let rotation = 0;
+    let spinning = false;
+
+    function drawWheel() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < items.length; i++) {
+        const start = rotation + i * segmentAngle - Math.PI / 2;
+        const end = start + segmentAngle;
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, start, end);
+        ctx.closePath();
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fill();
+        ctx.strokeStyle = '#8c5a34';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(start + segmentAngle / 2);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#2e241c';
+        ctx.font = 'bold 18px Arial';
+        writeWrapped(items[i].name, radius - 18);
+        ctx.restore();
+      }
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 28, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff8ef';
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#8c5a34';
+      ctx.stroke();
+    }
+
+    function writeWrapped(text, x) {
+      const words = text.split(' ');
+      let line = '';
+      const lines = [];
+
+      for (let i = 0; i < words.length; i++) {
+        const test = line + words[i] + ' ';
+        if (ctx.measureText(test).width > 112 && i > 0) {
+          lines.push(line.trim());
+          line = words[i] + ' ';
+        } else {
+          line = test;
+        }
+      }
+      lines.push(line.trim());
+
+      lines.forEach((l, idx) => {
+        ctx.fillText(l, x, (idx - (lines.length - 1) / 2) * 20 + 6);
+      });
+    }
+
+    function showResult(item) {
+      resultBox.innerHTML = `
+        <h2>Gezogener Begriff: ${item.name}</h2>
+        <p><strong>Hilfe für die erklärende Person:</strong> ${item.hint}</p>
+        <p>${item.example}</p>
+        <div class="label">Wort nicht direkt nennen • kein Bild zeigen • über Merkmale und Funktion erklären</div>
+      `;
+    }
+
+    function spinWheel() {
+      if (spinning) return;
+      spinning = true;
+      spinBtn.disabled = true;
+
+      const targetIndex = Math.floor(Math.random() * items.length);
+      const extraTurns = 6 + Math.random() * 2;
+      const targetAngle = (Math.PI * 2) - (targetIndex * segmentAngle + segmentAngle / 2);
+      const finalRotation = rotation + extraTurns * Math.PI * 2 + targetAngle;
+      const startRotation = rotation;
+      const duration = 4300;
+      const startTime = performance.now();
+
+      function animate(now) {
+        const elapsed = now - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - t, 3);
+        rotation = startRotation + (finalRotation - startRotation) * eased;
+        drawWheel();
+
+        if (t < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          rotation = finalRotation % (Math.PI * 2);
+          drawWheel();
+          showResult(items[targetIndex]);
+          spinning = false;
+          spinBtn.disabled = false;
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function resetWheel() {
+      rotation = 0;
+      drawWheel();
+      resultBox.innerHTML = `
+        <h2>Noch kein Begriff gezogen</h2>
+        <p>Klicke auf <strong>„Glücksrad drehen“</strong>. Danach erscheint ein Steinzeit-Begriff mit einer kurzen Hilfe für die erklärende Person.</p>
+        <div class="label">Tipp: Die Spielregeln stehen rechts und können jederzeit mitgelesen werden.</div>
+      `;
+    }
+
+    spinBtn.addEventListener('click', spinWheel);
+    resetBtn.addEventListener('click', resetWheel);
+    drawWheel();
+  </script>
+</body>
+</html>
