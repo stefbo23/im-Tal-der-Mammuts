@@ -358,6 +358,25 @@
       });
     }
 
+
+    function getSelectedIndex() {
+      const normalized = ((rotation % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+      const pointerAngle = -Math.PI / 2;
+      let bestIndex = 0;
+      let bestDiff = Infinity;
+
+      for (let i = 0; i < items.length; i++) {
+        const center = normalized + i * segmentAngle + segmentAngle / 2 - Math.PI / 2;
+        let diff = Math.atan2(Math.sin(center - pointerAngle), Math.cos(center - pointerAngle));
+        diff = Math.abs(diff);
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          bestIndex = i;
+        }
+      }
+      return bestIndex;
+    }
+
     function showResult(item) {
       resultBox.innerHTML = `
         <h2>Gezogener Begriff: ${item.name}</h2>
@@ -392,7 +411,8 @@
         } else {
           rotation = finalRotation % (Math.PI * 2);
           drawWheel();
-          showResult(items[targetIndex]);
+          const selectedIndex = getSelectedIndex();
+          showResult(items[selectedIndex]);
           spinning = false;
           spinBtn.disabled = false;
         }
